@@ -1,0 +1,3 @@
+mongodb+srv://6814951026_db_user:<db_password>@cluster0.cgawxse.mongodb.net/
+K9vn4vxJq95CH8ex
+mongodb+srv://6814951026_db_user:K9vn4vxJq95CH8ex@cluster0.cgawxse.mongodb.net/Zneaker
