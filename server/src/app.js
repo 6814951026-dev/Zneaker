@@ -20,13 +20,22 @@ const vercelOrigins = [
   }
 }).filter(Boolean);
 
-app.use(cors({
-  origin(origin, callback) {
-    if (!origin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return callback(null, true);
-    if (process.env.CLIENT_ORIGIN && origin === process.env.CLIENT_ORIGIN) return callback(null, true);
-    if (vercelOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error("Origin is not allowed by CORS"));
-  }
+app.use(cors((req, callback) => {
+  const origin = req.get("Origin");
+  if (!origin) return callback(null, { origin: false });
+
+  let sameHost = false;
+  try {
+    const parsedOrigin = new URL(origin);
+    sameHost = ["http:", "https:"].includes(parsedOrigin.protocol)
+      && parsedOrigin.host.toLowerCase() === String(req.get("host") || "").toLowerCase();
+  } catch {}
+
+  const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  const allowed = sameHost || isLocalhost
+    || origin === process.env.CLIENT_ORIGIN
+    || vercelOrigins.includes(origin);
+  callback(null, { origin: allowed ? origin : false });
 }));
 app.use(express.json());
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
