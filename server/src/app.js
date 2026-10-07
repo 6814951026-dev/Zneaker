@@ -5,6 +5,7 @@ const userRoutes = require("./routes/user.routes");
 const orderRoutes = require("./routes/order.routes");
 const reviewRoutes = require("./routes/review.routes");
 const uploadRoutes = require("./routes/upload.routes");
+const paymentController = require("./controllers/payment.controller");
 const { notFound, errorHandler } = require("./middlewares/error.middleware");
 
 const app = express();
@@ -44,6 +45,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/uploads", uploadRoutes);
+app.post("/api/payments/opn/webhook", paymentController.webhook);
 app.use(notFound);
 app.use(errorHandler);
 

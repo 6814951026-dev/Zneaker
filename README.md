@@ -11,10 +11,29 @@ Zneaker is a React/Vite storefront with an Express API and MongoDB/Mongoose data
 
    - `MONGO_URI`: Atlas connection string for the `zneaker` database. URL-encode special characters in the database username/password.
    - `JWT_SECRET`: long, random secret used to sign login tokens.
+   - `OPN_SECRET_KEY`: Opn/Omise secret key. Keep it server-side; use a test key while testing and a live key only after merchant approval.
+   - `RESEND_API_KEY`, `ORDER_EMAIL_FROM`, `ADMIN_ORDER_EMAIL`: optional Resend settings for order emails. Verify the sender domain with Resend before sending.
    - `BLOB_READ_WRITE_TOKEN`: Vercel Blob read/write token (added automatically when the store is connected).
    - `CLIENT_ORIGIN`: optional exact origin if the API is hosted separately. For this single-project deployment, leave it unset.
 
 5. Redeploy after adding or changing environment variables. The API health endpoint is `/api/health`.
+
+## PromptPay point top-ups
+
+Point top-ups use Opn/Omise PromptPay charges. The existing club conversion is 50 THB per point; each charge accepts 1–3,000 points (50–150,000 THB). Points are credited only after the server verifies the successful charge with Opn and processes its webhook.
+
+1. Create an Opn/Omise merchant account and request PromptPay activation; the payment method requires provider approval.
+2. Add `OPN_SECRET_KEY` to Vercel for Production (and Preview when testing). Never expose the secret key in the client bundle.
+3. Register `https://<your-production-domain>/api/payments/opn/webhook` as the Opn webhook endpoint, with `charge.complete` and `charge.expire` events enabled. Configure the test-mode webhook separately when testing with a test key.
+4. Test with the provider's test secret key first. In test mode, complete or fail the charge from the Opn dashboard and confirm the points change only after the successful webhook is verified.
+
+## Storefront and checkout
+
+The catalog API supports text search, category/gender and price filters, sorting, and pagination. Product records include tags and optional size/color stock variants. Seed data contains twelve sample sneaker models; `npm --prefix server run seed` **deletes and recreates all users, products, reviews, and orders**, so only use it on a disposable database.
+
+Members can edit their profile, maintain delivery addresses, and review past orders. The cart persists in browser storage. Checkout supports cash on delivery and Opn PromptPay; the API recalculates item prices, checks variant stock, and reserves inventory inside a MongoDB transaction. Shipping is ฿60 under ฿2,000 and free at or above ฿2,000. Paid PromptPay orders are confirmed only after the provider charge is verified. Admin accounts can add catalog items from the account panel; product write APIs and order status changes require an admin token.
+
+To enable order emails, configure the three Resend variables above. Order receipt and payment confirmation emails are sent to the member and, if configured, the admin inbox. Without those variables, checkout continues and order history remains available in the account panel.
 
 ## Image uploads
 

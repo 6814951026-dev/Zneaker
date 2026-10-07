@@ -26,7 +26,10 @@ const orderItemSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0
-    }
+    },
+    productName: { type: String, trim: true, required: true },
+    image: { type: String, default: "" },
+    hasVariant: { type: Boolean, default: false }
   },
   { _id: false }
 );
@@ -54,12 +57,18 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      required: true,
-      trim: true
+      enum: ["cod", "promptpay"],
+      required: true
     },
+    paymentStatus: { type: String, enum: ["pending", "paid", "failed", "refunded"], default: "pending" },
+    chargeId: { type: String, unique: true, sparse: true },
+    qrImageUrl: { type: String, default: "" },
+    paidAt: { type: Date, default: null },
+    subtotal: { type: Number, required: true, min: 0 },
+    shippingFee: { type: Number, required: true, min: 0 },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "shipping", "delivered", "cancelled"],
+      enum: ["pending_payment", "confirmed", "shipping", "delivered", "cancelled"],
       default: "pending"
     }
   },

@@ -1,5 +1,6 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const connectDB = require("./config/db");
 const User = require("./models/user.model");
 const Product = require("./models/product.model");
@@ -28,7 +29,7 @@ const users = [
     name: "Zneaker Admin",
     email: "admin@zneaker.com",
     phone: "0800000000",
-    password: "admin123",
+    password: process.env.SEED_ADMIN_PASSWORD || (process.env.NODE_ENV === "production" ? "" : "admin123"),
     role: "admin",
     address: "99/1 ถนนสุขุมวิท กรุงเทพฯ"
   }
@@ -145,7 +146,38 @@ const productSeed = [
   }
 ];
 
+const additionalProducts = [
+  ["Zneaker Cloudstep", "รองเท้าเดินเล่นน้ำหนักเบาพร้อมพื้นรองรับแรงกระแทก", 2690, "Lifestyle", "Unisex", 0, [38, 39, 40, 41, 42, 43], ["ขาว", "เทา"]],
+  ["Zneaker Court Low", "ทรงคลาสสิกสำหรับลุคสตรีทที่แมตช์ง่ายทุกวัน", 2390, "Classic", "Men", 1, [39, 40, 41, 42, 43, 44], ["ขาว", "เขียว"]],
+  ["Zneaker Sprint Lite", "รองเท้าวิ่งคล่องตัวสำหรับซ้อมและวิ่งระยะสั้น", 3190, "Performance", "Women", 2, [36, 37, 38, 39, 40, 41], ["ชมพู", "ดำ"]],
+  ["Zneaker Canvas Day", "ผ้าแคนวาสใส่สบาย เติมสีสันให้วันธรรมดา", 1790, "Lifestyle", "Unisex", 3, [36, 37, 38, 39, 40, 41, 42], ["ครีม", "น้ำเงิน"]],
+  ["Zneaker Trail Ridge", "พื้นยึดเกาะสำหรับเส้นทางนอกเมืองและกิจกรรมกลางแจ้ง", 4290, "Performance", "Unisex", 4, [39, 40, 41, 42, 43, 44, 45], ["ดำ", "ส้ม"]],
+  ["Zneaker Retro Court", "แรงบันดาลใจจากรองเท้าคอร์ตยุคคลาสสิกในทรงร่วมสมัย", 2990, "Classic", "Women", 5, [35, 36, 37, 38, 39, 40], ["น้ำตาล", "ขาว"]]
+].map(([name, description, price, category, gender, imageIndex, sizes, colors], index) => ({
+  name,
+  description,
+  price,
+  originalPrice: price + 300,
+  category,
+  gender,
+  sizes,
+  colors,
+  tags: [category.toLowerCase(), "everyday", "sneaker"],
+  image: imageUrls[imageIndex],
+  images: [imageUrls[imageIndex]],
+  rating: 4.3 + (index % 6) / 10,
+  reviewCount: 24 + index * 13,
+  stock: 16 + index * 3,
+  isNew: index < 2,
+  isBestSeller: index === 1 || index === 4,
+  isSale: index % 2 === 0
+}));
+productSeed.push(...additionalProducts);
+
 async function seedDatabase() {
+  if (process.env.NODE_ENV === "production" && String(process.env.SEED_ADMIN_PASSWORD || "").length < 12) {
+    throw new Error("Set a unique SEED_ADMIN_PASSWORD of at least 12 characters before seeding production");
+  }
   await connectDB();
 
   await User.deleteMany({});
@@ -153,7 +185,11 @@ async function seedDatabase() {
   await Review.deleteMany({});
   await Order.deleteMany({});
 
-  const createdUsers = await User.insertMany(users);
+  const usersWithHashedPasswords = await Promise.all(users.map(async (user) => ({
+    ...user,
+    password: await bcrypt.hash(user.password, 12)
+  })));
+  const createdUsers = await User.insertMany(usersWithHashedPasswords);
   const createdProducts = await Product.insertMany(productSeed);
 
   const reviews = [
@@ -182,19 +218,26 @@ async function seedDatabase() {
           quantity: 1,
           size: 41,
           color: "ดำ",
-          price: createdProducts[0].price
+          price: createdProducts[0].price,
+          productName: createdProducts[0].name,
+          image: createdProducts[0].image
         },
         {
           product: createdProducts[3]._id,
           quantity: 1,
           size: 40,
           color: "เทา",
-          price: createdProducts[3].price
+          price: createdProducts[3].price,
+          productName: createdProducts[3].name,
+          image: createdProducts[3].image
         }
       ],
       totalAmount: 5780,
+      subtotal: 5780,
+      shippingFee: 0,
       shippingAddress: "123/45 ถนนเจริญนคร กรุงเทพฯ 10110",
-      paymentMethod: "Credit Card",
+      paymentMethod: "cod",
+      paymentStatus: "paid",
       status: "confirmed"
     },
     {
@@ -205,13 +248,18 @@ async function seedDatabase() {
           quantity: 1,
           size: 42,
           color: "ขาว",
-          price: createdProducts[2].price
+          price: createdProducts[2].price,
+          productName: createdProducts[2].name,
+          image: createdProducts[2].image
         }
       ],
       totalAmount: 3590,
+      subtotal: 3590,
+      shippingFee: 0,
       shippingAddress: "88/9 เขตคลองเตย กรุงเทพฯ 10110",
-      paymentMethod: "Bank Transfer",
-      status: "pending"
+      paymentMethod: "cod",
+      paymentStatus: "pending",
+      status: "confirmed"
     }
   ];
 

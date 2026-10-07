@@ -1,8 +1,8 @@
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:5000/api" : "/api");
 
-async function request(path, options) {
+async function request(path, { token, ...options } = {}) {
   const response = await fetch(`${API_URL}${path}`, {
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     ...options
   });
   const payload = await response.json().catch(() => ({}));
@@ -16,13 +16,13 @@ export const getProducts = (params = {}) => {
 };
 export const getProductById = (id) => request(`/products/${id}`);
 export const searchProducts = (query) => request(`/products/search?q=${encodeURIComponent(query)}`);
-export const createProduct = (product) => request("/products", { method: "POST", body: JSON.stringify(product) });
-export const updateProduct = (id, product) => request(`/products/${id}`, { method: "PUT", body: JSON.stringify(product) });
-export const deleteProduct = (id) => request(`/products/${id}`, { method: "DELETE" });
+export const createProduct = (product, token) => request("/products", { token, method: "POST", body: JSON.stringify(product) });
+export const updateProduct = (id, product, token) => request(`/products/${id}`, { token, method: "PUT", body: JSON.stringify(product) });
+export const deleteProduct = (id, token) => request(`/products/${id}`, { token, method: "DELETE" });
 export const getReviews = (productId) => request(`/reviews?product=${encodeURIComponent(productId)}`);
-export const createReview = (review) => request("/reviews", { method: "POST", body: JSON.stringify(review) });
-export const createOrder = (order) => request("/orders", { method: "POST", body: JSON.stringify(order) });
-export const getOrders = (userId) => request(`/orders${userId ? `?user=${encodeURIComponent(userId)}` : ""}`);
+export const createReview = (review, token) => request("/reviews", { token, method: "POST", body: JSON.stringify(review) });
+export const createOrder = (order, token) => request("/orders", { token, method: "POST", body: JSON.stringify(order) });
+export const getOrders = (userId, token) => request(`/orders${userId ? `?user=${encodeURIComponent(userId)}` : ""}`, { token });
 export async function uploadImage(file, token) {
   const { upload } = await import("@vercel/blob/client");
   return upload(file.name, file, {
