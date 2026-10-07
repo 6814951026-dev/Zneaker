@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+const mongoose = require("mongoose");
 const User = require("../models/user.model");
 const Product = require("../models/product.model");
 const { createToken } = require("../middlewares/auth.middleware");
@@ -37,13 +38,19 @@ async function login(req, res, next) {
 }
 async function me(req, res, next) {
   try {
-    const user = await User.findById(req.auth.id).select(PROFILE_FIELDS)
-      .populate({ path: "draws.product", select: "name image price" })
-      .populate({ path: "transactions.product", select: "name image" });
+    const user = await User.findById(req.auth.id).select(PROFILE_FIELDS).lean();
     if (!user) return res.status(404).json({ message: "ไม่พบบัญชีสมาชิก" });
+    const transactions = Array.isArray(user.transactions) ? user.transactions : [];
+    const draws = Array.isArray(user.draws) ? user.draws : [];
+    const productIds = [...new Set([...transactions, ...draws].map((entry) => entry.product).filter((id) => id && mongoose.isValidObjectId(id)).map(String))];
+    const products = productIds.length
+      ? await Product.find({ _id: { $in: productIds } }).select("name image price").lean()
+      : [];
+    const productById = new Map(products.map((product) => [String(product._id), product]));
     const today = todayBangkok();
     res.json({ user: publicUser(user), points: user.points || 0, checkedInToday: user.lastCheckinDate === today,
-      transactions: [...user.transactions].reverse(), draws: [...user.draws].reverse() });
+      transactions: transactions.slice().reverse().map((entry) => ({ ...entry, product: productById.get(String(entry.product)) || null })),
+      draws: draws.slice().reverse().map((entry) => ({ ...entry, product: productById.get(String(entry.product)) || null })) });
   } catch (error) { next(error); }
 }
 async function updateProfile(req, res, next) {
