@@ -27,10 +27,15 @@ async function login(req, res, next) {
   try {
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
-    const user = await User.findOne({ email }).select("+password");
+    if (!email || !password) return res.status(400).json({ message: "กรุณากรอกอีเมลและรหัสผ่าน" });
+    // Case-insensitive lookup also supports accounts created before email normalization was enforced.
+    const escapedEmail = email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const user = await User.findOne({ email: new RegExp(`^${escapedEmail}$`, "i") }).select("+password");
     if (!user) return res.status(401).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
     const isHash = /^\$2[aby]\$/.test(user.password);
-    const valid = isHash ? await bcrypt.compare(password, user.password) : user.password === password;
+    let valid = false;
+    try { valid = isHash ? await bcrypt.compare(password, user.password) : user.password === password; }
+    catch { valid = false; }
     if (!valid) return res.status(401).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
     if (!isHash) { user.password = await bcrypt.hash(password, 12); await user.save(); }
     res.json(session(user));
