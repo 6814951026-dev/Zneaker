@@ -29,7 +29,15 @@ Point top-ups use Opn/Omise PromptPay charges. The existing club conversion is 5
 
 ## Storefront and checkout
 
-The catalog API supports text search, category/gender and price filters, sorting, and pagination. Product records include tags and optional size/color stock variants. Seed data contains twelve sample sneaker models; `npm --prefix server run seed` **deletes and recreates all users, products, reviews, and orders**, so only use it on a disposable database.
+The catalog API supports text search, category/gender and price filters, sorting, and pagination. Product records include tags and optional size/color stock variants. The 12 sample sneaker models have individual product images. To safely add the catalog to the database configured in `server/.env`, run `npm --prefix server run seed:products`. This inserts missing products and only fills an image when an existing same-name product has none; it does not touch users, orders, or stock. If Node reports `querySrv ECONNREFUSED` on Windows, retry with a DNS resolver that supports SRV records:
+
+```powershell
+$env:MONGODB_DNS_SERVERS = "8.8.8.8,1.1.1.1"
+npm --prefix server run seed:products
+Remove-Item Env:MONGODB_DNS_SERVERS
+```
+
+`npm --prefix server run seed` is different: it **deletes and recreates all users, products, reviews, and orders**, so only use it on a disposable database.
 
 Members can edit their profile, maintain delivery addresses, and review past orders. The cart persists in browser storage. Checkout supports cash on delivery and Opn PromptPay; the API recalculates item prices, checks variant stock, and reserves inventory inside a MongoDB transaction. Shipping is ฿60 under ฿2,000 and free at or above ฿2,000. Paid PromptPay orders are confirmed only after the provider charge is verified. Admin accounts can add catalog items from the account panel; product write APIs and order status changes require an admin token.
 

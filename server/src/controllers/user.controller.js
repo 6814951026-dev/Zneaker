@@ -25,12 +25,18 @@ async function createUser(req, res, next) {
 }
 async function login(req, res, next) {
   try {
-    const email = String(req.body.email || "").trim().toLowerCase();
+    const identifier = String(req.body.identifier || req.body.email || "").trim();
     const password = String(req.body.password || "");
-    if (!email || !password) return res.status(400).json({ message: "กรุณากรอกอีเมลและรหัสผ่าน" });
-    // Case-insensitive lookup also supports accounts created before email normalization was enforced.
-    const escapedEmail = email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const user = await User.findOne({ email: new RegExp(`^${escapedEmail}$`, "i") }).select("+password");
+    if (!identifier || !password) return res.status(400).json({ message: "กรุณากรอกอีเมลหรือเบอร์โทร และรหัสผ่าน" });
+    let lookup;
+    if (identifier.includes("@")) {
+      // Case-insensitive lookup also supports accounts created before email normalization was enforced.
+      const escapedEmail = identifier.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      lookup = { email: new RegExp(`^${escapedEmail}$`, "i") };
+    } else {
+      lookup = { phone: identifier };
+    }
+    const user = await User.findOne(lookup).select("+password");
     if (!user) return res.status(401).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
     const isHash = /^\$2[aby]\$/.test(user.password);
     let valid = false;

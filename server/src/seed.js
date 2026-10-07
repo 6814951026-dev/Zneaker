@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: require("path").resolve(__dirname, "../.env") });
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const connectDB = require("./config/db");
@@ -13,7 +13,13 @@ const imageUrls = [
   "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=800&q=80",
   "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=800&q=80",
   "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=800&q=80",
-  "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=800&q=80"
+  "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1495555961986-6d4c1ecb7be3?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1605348532760-6753d2c43329?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=800&q=80"
 ];
 
 const users = [
@@ -147,12 +153,12 @@ const productSeed = [
 ];
 
 const additionalProducts = [
-  ["Zneaker Cloudstep", "รองเท้าเดินเล่นน้ำหนักเบาพร้อมพื้นรองรับแรงกระแทก", 2690, "Lifestyle", "Unisex", 0, [38, 39, 40, 41, 42, 43], ["ขาว", "เทา"]],
-  ["Zneaker Court Low", "ทรงคลาสสิกสำหรับลุคสตรีทที่แมตช์ง่ายทุกวัน", 2390, "Classic", "Men", 1, [39, 40, 41, 42, 43, 44], ["ขาว", "เขียว"]],
-  ["Zneaker Sprint Lite", "รองเท้าวิ่งคล่องตัวสำหรับซ้อมและวิ่งระยะสั้น", 3190, "Performance", "Women", 2, [36, 37, 38, 39, 40, 41], ["ชมพู", "ดำ"]],
-  ["Zneaker Canvas Day", "ผ้าแคนวาสใส่สบาย เติมสีสันให้วันธรรมดา", 1790, "Lifestyle", "Unisex", 3, [36, 37, 38, 39, 40, 41, 42], ["ครีม", "น้ำเงิน"]],
-  ["Zneaker Trail Ridge", "พื้นยึดเกาะสำหรับเส้นทางนอกเมืองและกิจกรรมกลางแจ้ง", 4290, "Performance", "Unisex", 4, [39, 40, 41, 42, 43, 44, 45], ["ดำ", "ส้ม"]],
-  ["Zneaker Retro Court", "แรงบันดาลใจจากรองเท้าคอร์ตยุคคลาสสิกในทรงร่วมสมัย", 2990, "Classic", "Women", 5, [35, 36, 37, 38, 39, 40], ["น้ำตาล", "ขาว"]]
+  ["Zneaker Cloudstep", "รองเท้าเดินเล่นน้ำหนักเบาพร้อมพื้นรองรับแรงกระแทก", 2690, "Lifestyle", "Unisex", 6, [38, 39, 40, 41, 42, 43], ["ขาว", "เทา"]],
+  ["Zneaker Court Low", "ทรงคลาสสิกสำหรับลุคสตรีทที่แมตช์ง่ายทุกวัน", 2390, "Classic", "Men", 7, [39, 40, 41, 42, 43, 44], ["ขาว", "เขียว"]],
+  ["Zneaker Sprint Lite", "รองเท้าวิ่งคล่องตัวสำหรับซ้อมและวิ่งระยะสั้น", 3190, "Performance", "Women", 8, [36, 37, 38, 39, 40, 41], ["ชมพู", "ดำ"]],
+  ["Zneaker Canvas Day", "ผ้าแคนวาสใส่สบาย เติมสีสันให้วันธรรมดา", 1790, "Lifestyle", "Unisex", 9, [36, 37, 38, 39, 40, 41, 42], ["ครีม", "น้ำเงิน"]],
+  ["Zneaker Trail Ridge", "พื้นยึดเกาะสำหรับเส้นทางนอกเมืองและกิจกรรมกลางแจ้ง", 4290, "Performance", "Unisex", 10, [39, 40, 41, 42, 43, 44, 45], ["ดำ", "ส้ม"]],
+  ["Zneaker Retro Court", "แรงบันดาลใจจากรองเท้าคอร์ตยุคคลาสสิกในทรงร่วมสมัย", 2990, "Classic", "Women", 11, [35, 36, 37, 38, 39, 40], ["น้ำตาล", "ขาว"]]
 ].map(([name, description, price, category, gender, imageIndex, sizes, colors], index) => ({
   name,
   description,
@@ -276,7 +282,11 @@ async function seedDatabase() {
   process.exit(0);
 }
 
-seedDatabase().catch((error) => {
-  console.error("Seeding failed:", error);
-  process.exit(1);
-});
+if (require.main === module) {
+  seedDatabase().catch((error) => {
+    console.error("Seeding failed:", error);
+    process.exit(1);
+  });
+}
+
+module.exports = { productSeed };
