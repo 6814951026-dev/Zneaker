@@ -1,2 +1,9 @@
-.vercel
-Zneaker/.git-submodule-backup/
+﻿.vercel/
+node_modules/
+client/node_modules/
+server/node_modules/
+client/dist/
+.env
+server/.env
+*.log
+Zneaker/

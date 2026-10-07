@@ -1,11 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm --prefix Zneaker install && npm --prefix Zneaker/client install --include=dev",
-  "buildCommand": "npm --prefix Zneaker/client run build",
-  "outputDirectory": "Zneaker/client/dist",
+  "installCommand": "npm install && npm --prefix client install --include=dev",
+  "buildCommand": "npm --prefix client run build",
+  "outputDirectory": "client/dist",
   "functions": {
     "api/[...path].js": {
-      "includeFiles": "Zneaker/server/src/**"
+      "includeFiles": "server/src/**"
     }
   }
 }
